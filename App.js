@@ -1,10 +1,13 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, StatusBar, View, Text } from 'react-native';
+import Title from './components/Title/Title';
+import Pokelist from './components/PokeList/PokeList';
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+      <Title />
+      <Text>BARRA DE BUSQUEDA</Text>
+      <Pokelist />
       <StatusBar style="auto" />
     </View>
   );
@@ -13,8 +16,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#DC0A2D',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+  }
 });
