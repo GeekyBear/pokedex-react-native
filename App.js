@@ -3,6 +3,7 @@ import Title from './components/Title/Title';
 import Pokelist from './components/PokeList/PokeList';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import Detail from './components/Detail/Detail';
 
 export default function App() {
   const [pokeData, setPokeData] = useState({})
@@ -16,9 +17,10 @@ export default function App() {
   }, [])
   return (
     <View style={styles.container}>
-      <Title />
+      {/* <Title />
       <Text>BARRA DE BUSQUEDA</Text>
-      {pokeData ? <Pokelist pokeData={pokeData} /> : null}
+      {pokeData ? <Pokelist pokeData={pokeData} /> : null} */}
+      <Detail />
       <StatusBar style="auto" />
     </View>
   );
