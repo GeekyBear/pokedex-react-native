@@ -10,13 +10,13 @@ const availableSpace = screenWidth - (numColumns - 1) * gap - 24;
 const itemSize = availableSpace / numColumns;
 
 export default function Pokelist(data) {
-    const { count, next, previous, results } = data.pokeData;
-    const [pokeData, setPokeData] = useState([]);
+    const { pokeData } = data;
+    const [currentData, setCurrentData] = useState([]);
 
     useEffect(() => {
         async function fetchData() {
-            if (results) {
-                let endpoints = results.map((pokemon) => pokemon.url);
+            if (pokeData) {
+                let endpoints = pokeData.map((pokemon) => pokemon.url);
 
                 try {
                     const fulldata = await axios.all(endpoints.map((endpoint) => axios.get(endpoint))).then(
@@ -25,7 +25,7 @@ export default function Pokelist(data) {
 
                     if (fulldata) {
                         const pokemons = fulldata.map(({ data }) => data)
-                        setPokeData(pokemons)
+                        setCurrentData(pokemons)
                     }
                 } catch (error) {
                     console.log(error)
@@ -33,7 +33,7 @@ export default function Pokelist(data) {
             }
         };
         fetchData();
-    }, [count])
+    }, [pokeData])
 
 
     return (
@@ -42,8 +42,9 @@ export default function Pokelist(data) {
             contentContainerStyle={{ gap }}
             columnWrapperStyle={{ gap }}
             numColumns={numColumns}
-            data={pokeData}
+            data={currentData}
             keyExtractor={item => item.id}
+            onEndReached={() => data.handleLoadMore()}
             renderItem={({ item }) =>
                 <View style={{
                     height: itemSize,
@@ -63,9 +64,9 @@ export default function Pokelist(data) {
                     gap: 8,
                 }}>
                     <Text style={{ position: 'absolute', right: 12, top: 4 }}>#{item.id}</Text>
-                    <Image style={{ position: 'absolute', width: '90%', height: '90%', zIndex: 2 }}
+                    <Image style={{ position: 'absolute', width: '70%', height: '70%', zIndex: 2 }}
                         source={{
-                            uri: item.sprites.front_default
+                            uri: item.sprites.other['official-artwork'].front_default
                         }} />
                     <View style={{ position: 'absolute', bottom: 0, width: '100%', height: '40%', backgroundColor: '#EFEFEF', borderRadius: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
                         <Text>{item.name}</Text>

@@ -1,7 +1,8 @@
 import React from "react";
 import { Text, View, Image, StyleSheet, Dimensions } from 'react-native';
 
-export default function Detail() {
+export default function Detail(id) {
+    console.log(id)
     return (
         <View style={styles.container}>
             <Image style={styles.pokeball} source={require('../../assets/images/pokeball.png')} />
@@ -14,7 +15,7 @@ export default function Detail() {
             </View>
             <View style={styles.info}>
                 <Text>Grass, Poison</Text>
-                <Text style={styles.aboutText}>About</Text>
+                <Text style={styles.sectionTitle}>About</Text>
                 <View style={styles.about}>
                     <View style={{ width: '30%', alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
@@ -41,7 +42,7 @@ export default function Detail() {
                     </View>
                 </View>
                 <Text style={styles.description}>There is a plant seed on its back right from the day this Pokémon is born. The seed slowly grows larger.</Text>
-                <Text>Base Stats</Text>
+                <Text style={styles.sectionTitle}>Base Stats</Text>
             </View>
         </View>
     )
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     about: {
         flexDirection: 'row',
     },
-    aboutText: {
+    sectionTitle: {
         color: '#74CB48',
         fontWeight: 700,
         fontSize: 16,
