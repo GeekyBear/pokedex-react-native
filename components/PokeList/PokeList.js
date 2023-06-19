@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, FlatList, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Image, FlatList, Dimensions, Button, TouchableOpacity } from 'react-native';
 
 const screenWidth = Dimensions.get('screen').width;
 const numColumns = 3;
@@ -64,13 +64,21 @@ export default function Pokelist(data) {
                     gap: 8,
                 }}>
                     <Text style={{ position: 'absolute', right: 12, top: 4 }}>#{item.id}</Text>
-                    <Image style={{ position: 'absolute', width: '70%', height: '70%', zIndex: 2 }}
-                        source={{
-                            uri: item.sprites.other['official-artwork'].front_default
-                        }} />
-                    <View style={{ position: 'absolute', bottom: 0, width: '100%', height: '40%', backgroundColor: '#EFEFEF', borderRadius: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <Text>{item.name}</Text>
-                    </View>
+                    <TouchableOpacity style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                        //onPress={() => data.navigation.navigate('Detail')
+                        onPress={() =>
+                            data.navigation.push('Detail', {
+                                pokemonId: item.id,
+                            })
+                        }>
+                        <Image style={{ width: '70%', height: '70%', zIndex: 2 }}
+                            source={{
+                                uri: item.sprites.other['official-artwork'].front_default
+                            }} />
+                        <View style={{ position: 'absolute', bottom: 0, width: '100%', height: '40%', backgroundColor: '#EFEFEF', borderRadius: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <Text>{item.name}</Text>
+                        </View>
+                    </TouchableOpacity>
                 </View>}
         />
     )

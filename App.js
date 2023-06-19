@@ -3,6 +3,9 @@ import Title from './components/Title/Title';
 import Pokelist from './components/PokeList/PokeList';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import Detail from './components/Detail/Detail';
 
 export default function App() {
@@ -36,14 +39,27 @@ export default function App() {
       })
   };
 
+  const Stack = createNativeStackNavigator();
+
+  function HomeScreen({ navigation }) {
+    return (
+      <View style={styles.container}>
+        <Title />
+        <Text>BARRA DE BUSQUEDA</Text>
+        {pokeData ? <Pokelist handleLoadMore={handleLoadMore} pokeData={pokeData} navigation={navigation} /> : null}
+        {/* <Detail /> */}
+        <StatusBar style="auto" />
+      </View>
+    )
+  }
+
   return (
-    <View style={styles.container}>
-      <Title />
-      <Text>BARRA DE BUSQUEDA</Text>
-      {pokeData ? <Pokelist handleLoadMore={handleLoadMore} pokeData={pokeData} /> : null}
-      {/* <Detail /> */}
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Detail" component={Detail} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 

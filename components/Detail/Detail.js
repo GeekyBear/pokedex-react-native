@@ -1,49 +1,75 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, Image, StyleSheet, Dimensions } from 'react-native';
+import axios from 'axios';
 
-export default function Detail(id) {
-    console.log(id)
+export default function Detail({ navigation, route }) {
+    const { pokemonId } = route.params;
+    const [pokemonData, setPokemonData] = useState({})
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const fulldata = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
+
+                if (fulldata) {
+                    setPokemonData(fulldata)
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        };
+        fetchData();
+    }, [])
+
     return (
         <View style={styles.container}>
-            <Image style={styles.pokeball} source={require('../../assets/images/pokeball.png')} />
-            <View style={styles.title}>
-                <Text>Name</Text>
-                <Text>Number</Text>
-            </View>
-            <View style={styles.empty}>
-                <Image style={styles.pokeImage} source={require('../../assets/images/bulbasaur.png')} />
-            </View>
-            <View style={styles.info}>
-                <Text>Grass, Poison</Text>
-                <Text style={styles.sectionTitle}>About</Text>
-                <View style={styles.about}>
-                    <View style={{ width: '30%', alignItems: 'center' }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                            <Image source={require('../../assets/images/vectors/weight.png')} />
-                            <Text>6.9 kg</Text>
-                        </View>
-                        <Text>Weight</Text>
+            {pokemonData !== undefined
+                ? <View>
+                    <Image style={styles.pokeball} source={require('../../assets/images/pokeball.png')} />
+                    <View style={styles.title}>
+                        <Text>Name</Text>
+                        <Text>Number</Text>
                     </View>
-                    <Text>|</Text>
-                    <View style={{ width: '30%', alignItems: 'center', }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                            <Image source={require('../../assets/images/vectors/height.png')} />
-                            <Text>0,7 m</Text>
-                        </View>
-                        <Text>Height</Text>
+                    <View style={styles.empty}>
+                        <Image style={styles.pokeImage} source={require('../../assets/images/bulbasaur.png')} />
                     </View>
-                    <Text>|</Text>
-                    <View style={{ width: '30%', alignItems: 'center' }}>
-                        <View>
-                            <Text>Chlorophyll
-                                Overgrow</Text>
+                    <View style={styles.info}>
+                        {
+                            pokemonData.data !== undefined ? pokemonData.data.types.map(({ slot, type, url }) =>
+                                <Text>{type.name}</Text>
+                            ) : null
+                        }
+                        <Text style={styles.sectionTitle}>About</Text>
+                        <View style={styles.about}>
+                            <View style={{ width: '30%', alignItems: 'center' }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                                    <Image source={require('../../assets/images/vectors/weight.png')} />
+                                    <Text>6.9 kg</Text>
+                                </View>
+                                <Text>Weight</Text>
+                            </View>
+                            <Text>|</Text>
+                            <View style={{ width: '30%', alignItems: 'center', }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                                    <Image source={require('../../assets/images/vectors/height.png')} />
+                                    <Text>0,7 m</Text>
+                                </View>
+                                <Text>Height</Text>
+                            </View>
+                            <Text>|</Text>
+                            <View style={{ width: '30%', alignItems: 'center' }}>
+                                <View>
+                                    <Text>Chlorophyll
+                                        Overgrow</Text>
+                                </View>
+                                <Text>Moves</Text>
+                            </View>
                         </View>
-                        <Text>Moves</Text>
+                        <Text style={styles.description}>There is a plant seed on its back right from the day this Pokémon is born. The seed slowly grows larger.</Text>
+                        <Text style={styles.sectionTitle}>Base Stats</Text>
                     </View>
                 </View>
-                <Text style={styles.description}>There is a plant seed on its back right from the day this Pokémon is born. The seed slowly grows larger.</Text>
-                <Text style={styles.sectionTitle}>Base Stats</Text>
-            </View>
+                : <Text>Loading...</Text>}
         </View>
     )
 }
