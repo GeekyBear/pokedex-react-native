@@ -23,28 +23,30 @@ export default function Detail({ navigation, route }) {
 
     return (
         <View style={styles.container}>
-            {pokemonData !== undefined
+            {pokemonData.data !== undefined
                 ? <View>
                     <Image style={styles.pokeball} source={require('../../assets/images/pokeball.png')} />
                     <View style={styles.title}>
-                        <Text>Name</Text>
-                        <Text>Number</Text>
+                        <Text>{pokemonData.data.name}</Text>
+                        <Text>{pokemonData.data.id}</Text>
                     </View>
                     <View style={styles.empty}>
-                        <Image style={styles.pokeImage} source={require('../../assets/images/bulbasaur.png')} />
+                        <Image style={styles.pokeImage} source={{
+                            uri: pokemonData.data.sprites.other['official-artwork'].front_default
+                        }} />
                     </View>
                     <View style={styles.info}>
                         {
-                            pokemonData.data !== undefined ? pokemonData.data.types.map(({ slot, type, url }) =>
+                            pokemonData.data.types.map(({ slot, type, url }) =>
                                 <Text>{type.name}</Text>
-                            ) : null
+                            )
                         }
                         <Text style={styles.sectionTitle}>About</Text>
                         <View style={styles.about}>
                             <View style={{ width: '30%', alignItems: 'center' }}>
                                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
                                     <Image source={require('../../assets/images/vectors/weight.png')} />
-                                    <Text>6.9 kg</Text>
+                                    <Text>{pokemonData.data.weight}</Text>
                                 </View>
                                 <Text>Weight</Text>
                             </View>
@@ -52,17 +54,22 @@ export default function Detail({ navigation, route }) {
                             <View style={{ width: '30%', alignItems: 'center', }}>
                                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
                                     <Image source={require('../../assets/images/vectors/height.png')} />
-                                    <Text>0,7 m</Text>
+                                    <Text>{pokemonData.data.height}</Text>
                                 </View>
                                 <Text>Height</Text>
                             </View>
                             <Text>|</Text>
                             <View style={{ width: '30%', alignItems: 'center' }}>
                                 <View>
-                                    <Text>Chlorophyll
-                                        Overgrow</Text>
+                                    {
+                                        pokemonData.data.abilities.map(({ ability }) => {
+                                            let abilityName = ability.name;
+                                            return <Text>{abilityName.charAt(0).toUpperCase() + abilityName.slice(1)}</Text>
+                                        }
+                                        )
+                                    }
                                 </View>
-                                <Text>Moves</Text>
+                                <Text>Abilities</Text>
                             </View>
                         </View>
                         <Text style={styles.description}>There is a plant seed on its back right from the day this Pokémon is born. The seed slowly grows larger.</Text>
