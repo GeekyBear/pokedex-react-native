@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Text, View, Image, StyleSheet, Dimensions } from 'react-native';
 import axios from 'axios';
+import Colors from "../../constants/Colors";
 
 export default function Detail({ navigation, route }) {
     const { pokemonId } = route.params;
     const [pokemonData, setPokemonData] = useState({})
+    const [type, setType] = useState('');
 
     useEffect(() => {
         async function fetchData() {
@@ -13,7 +15,9 @@ export default function Detail({ navigation, route }) {
 
                 if (fulldata) {
                     setPokemonData(fulldata)
+                    setType(fulldata.data.types[0].type.name)
                 }
+
             } catch (error) {
                 console.log(error)
             }
@@ -22,13 +26,15 @@ export default function Detail({ navigation, route }) {
     }, [])
 
     return (
-        <View style={styles.container}>
+        <View style={[type ? { backgroundColor: Colors[type] } : { backgroundColor: 'blue' }, styles.container]}>
             {pokemonData.data !== undefined
                 ? <View>
+
                     <Image style={styles.pokeball} source={require('../../assets/images/pokeball.png')} />
                     <View style={styles.title}>
                         <Text>{pokemonData.data.name}</Text>
                         <Text>{pokemonData.data.id}</Text>
+                        <Text>{type}</Text>
                     </View>
                     <View style={styles.empty}>
                         <Image style={styles.pokeImage} source={{
@@ -83,11 +89,10 @@ export default function Detail({ navigation, route }) {
 
 const screenWidth = Dimensions.get('screen').width;
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#74CB48',
+        //backgroundColor: '#74CB48',
         alignItems: 'center',
         width: screenWidth,
     },
