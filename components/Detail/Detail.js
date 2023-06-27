@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import Colors from "../../constants/Colors";
+import LinearGradient from "react-native-linear-gradient";
 
 export default function Detail({ navigation: { goBack }, route }) {
   const { pokemonId } = route.params;
@@ -103,7 +104,11 @@ export default function Detail({ navigation: { goBack }, route }) {
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.sectionTitle}>About</Text>
+            <Text
+              style={[styles.sectionTitle, { color: Colors[pokemonType[0]] }]}
+            >
+              About
+            </Text>
             <View style={styles.about}>
               <View style={{ width: "30%", alignItems: "center" }}>
                 <View
@@ -163,7 +168,45 @@ export default function Detail({ navigation: { goBack }, route }) {
                   )
                   .flavor_text.replace(/(\r\n|\n|\r)/gm, " ")}
             </Text>
-            <Text style={styles.sectionTitle}>Base Stats</Text>
+            <Text
+              style={[styles.sectionTitle, { color: Colors[pokemonType[0]] }]}
+            >
+              Base Stats
+            </Text>
+            <View>
+              {pokemonData.data.stats.map(({ stat, base_stat }) => (
+                <View
+                  style={{
+                    width: screenWidth * 0.85,
+                    paddingHorizontal: 20,
+                    flexDirection: "row",
+                    justifyContent: "space-evenly",
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text>{statNameFormatter(stat.name)}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text>{base_stat}</Text>
+                  </View>
+                  <View
+                    style={{
+                      flex: 6,
+                      justifyContent: "center",
+                      backgroundColor: "ddd",
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: base_stat < 110 ? `${base_stat - 15}%` : `100%`,
+                        height: 10,
+                        backgroundColor: Colors[pokemonType[0]],
+                      }}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       ) : (
@@ -173,6 +216,22 @@ export default function Detail({ navigation: { goBack }, route }) {
   );
 }
 
+const statNameFormatter = (statname) => {
+  switch (statname) {
+    case "hp":
+      return "HP";
+    case "attack":
+      return "ATK";
+    case "defense":
+      return "DEF";
+    case "special-attack":
+      return "SATK";
+    case "special-defense":
+      return "SDEF";
+    case "speed":
+      return "SPD";
+  }
+};
 const screenWidth = Dimensions.get("screen").width;
 
 const styles = StyleSheet.create({
@@ -240,7 +299,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   sectionTitle: {
-    color: "#74CB48",
     fontWeight: 700,
     fontSize: 16,
   },
