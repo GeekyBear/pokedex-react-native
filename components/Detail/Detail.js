@@ -1,145 +1,251 @@
 import React, { useEffect, useState } from "react";
-import { Text, View, Image, StyleSheet, Dimensions } from 'react-native';
-import axios from 'axios';
+import {
+  Text,
+  View,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
+import axios from "axios";
 import Colors from "../../constants/Colors";
 
-export default function Detail({ navigation, route }) {
-    const { pokemonId } = route.params;
-    const [pokemonData, setPokemonData] = useState({})
-    const [type, setType] = useState('');
+export default function Detail({ navigation: { goBack }, route }) {
+  const { pokemonId } = route.params;
+  const [pokemonData, setPokemonData] = useState({});
+  const [pokemonType, setPokemonType] = useState([]);
+  const [flavorTextEntries, setFlavorTextEntries] = useState("");
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const fulldata = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
+  const language = "en";
+  const version = "red";
 
-                if (fulldata) {
-                    setPokemonData(fulldata)
-                    setType(fulldata.data.types[0].type.name)
-                }
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const fulldata = await axios.get(
+          `https://pokeapi.co/api/v2/pokemon/${pokemonId}`
+        );
 
-            } catch (error) {
-                console.log(error)
-            }
-        };
-        fetchData();
-    }, [])
+        if (fulldata) {
+          console.log(fulldata.data.species.url);
+          setPokemonData(fulldata);
+          setPokemonType(fulldata.data.types.map(({ type }) => type.name));
+        }
 
-    return (
-        <View style={[type ? { backgroundColor: Colors[type] } : { backgroundColor: 'blue' }, styles.container]}>
-            {pokemonData.data !== undefined
-                ? <View>
+        try {
+          const { data } = await axios.get(fulldata.data.species.url);
 
-                    <Image style={styles.pokeball} source={require('../../assets/images/pokeball.png')} />
-                    <View style={styles.title}>
-                        <Text>{pokemonData.data.name}</Text>
-                        <Text>{pokemonData.data.id}</Text>
-                        <Text>{type}</Text>
-                    </View>
-                    <View style={styles.empty}>
-                        <Image style={styles.pokeImage} source={{
-                            uri: pokemonData.data.sprites.other['official-artwork'].front_default
-                        }} />
-                    </View>
-                    <View style={styles.info}>
-                        {
-                            pokemonData.data.types.map(({ slot, type, url }) =>
-                                <Text>{type.name}</Text>
-                            )
+          if (data) {
+            setFlavorTextEntries(data.flavor_text_entries);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchData();
+  }, []);
+
+  return (
+    <View
+      style={[
+        pokemonType
+          ? { backgroundColor: Colors[pokemonType[0]] }
+          : { backgroundColor: "grey" },
+        styles.container,
+      ]}
+    >
+      {pokemonData.data !== undefined ? (
+        <View>
+          <Image
+            style={styles.pokeball}
+            source={require("../../assets/images/pokeball.png")}
+          />
+          <View style={styles.returnBar}>
+            <View style={styles.titleContainer}>
+              <TouchableOpacity onPress={() => goBack()}>
+                <Text style={styles.title}>{"< "}</Text>
+              </TouchableOpacity>
+              <Text style={styles.title}>{pokemonData.data.name}</Text>
+            </View>
+            <Text style={styles.subtitle}>#{pokemonData.data.id}</Text>
+          </View>
+          <View style={styles.empty}>
+            <Image
+              style={styles.pokeImage}
+              source={{
+                uri: pokemonData.data.sprites.other["official-artwork"]
+                  .front_default,
+              }}
+            />
+          </View>
+          <View style={styles.info}>
+            <View style={styles.types}>
+              {pokemonData.data.types.map(({ slot, type, url }, index) => (
+                <TouchableOpacity
+                  style={[
+                    pokemonType
+                      ? {
+                          backgroundColor:
+                            Colors[
+                              pokemonType.find((name) => name === type.name)
+                            ],
                         }
-                        <Text style={styles.sectionTitle}>About</Text>
-                        <View style={styles.about}>
-                            <View style={{ width: '30%', alignItems: 'center' }}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                                    <Image source={require('../../assets/images/vectors/weight.png')} />
-                                    <Text>{pokemonData.data.weight}</Text>
-                                </View>
-                                <Text>Weight</Text>
-                            </View>
-                            <Text>|</Text>
-                            <View style={{ width: '30%', alignItems: 'center', }}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                                    <Image source={require('../../assets/images/vectors/height.png')} />
-                                    <Text>{pokemonData.data.height}</Text>
-                                </View>
-                                <Text>Height</Text>
-                            </View>
-                            <Text>|</Text>
-                            <View style={{ width: '30%', alignItems: 'center' }}>
-                                <View>
-                                    {
-                                        pokemonData.data.abilities.map(({ ability }) => {
-                                            let abilityName = ability.name;
-                                            return <Text>{abilityName.charAt(0).toUpperCase() + abilityName.slice(1)}</Text>
-                                        }
-                                        )
-                                    }
-                                </View>
-                                <Text>Abilities</Text>
-                            </View>
-                        </View>
-                        <Text style={styles.description}>There is a plant seed on its back right from the day this Pokémon is born. The seed slowly grows larger.</Text>
-                        <Text style={styles.sectionTitle}>Base Stats</Text>
-                    </View>
+                      : { backgroundColor: "grey" },
+                    styles.types,
+                  ]}
+                >
+                  <Text key={index} style={styles.textType}>
+                    {type.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.sectionTitle}>About</Text>
+            <View style={styles.about}>
+              <View style={{ width: "30%", alignItems: "center" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Image
+                    source={require("../../assets/images/vectors/weight.png")}
+                  />
+                  <Text>{pokemonData.data.weight}</Text>
                 </View>
-                : <Text>Loading...</Text>}
+                <Text>Weight</Text>
+              </View>
+              <Text>|</Text>
+              <View style={{ width: "30%", alignItems: "center" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Image
+                    source={require("../../assets/images/vectors/height.png")}
+                  />
+                  <Text>{pokemonData.data.height}</Text>
+                </View>
+                <Text>Height</Text>
+              </View>
+              <Text>|</Text>
+              <View style={{ width: "30%", alignItems: "center" }}>
+                <View>
+                  {pokemonData.data.abilities.map(({ ability }) => {
+                    let abilityName = ability.name;
+                    return (
+                      <Text>
+                        {abilityName.charAt(0).toUpperCase() +
+                          abilityName.slice(1)}
+                      </Text>
+                    );
+                  })}
+                </View>
+                <Text>Abilities</Text>
+              </View>
+            </View>
+            <Text style={styles.description}>
+              {flavorTextEntries &&
+                flavorTextEntries
+                  .find(
+                    ({ language, version }) =>
+                      language.name === "en" && version.name === "black"
+                  )
+                  .flavor_text.replace(/(\r\n|\n|\r)/gm, " ")}
+            </Text>
+            <Text style={styles.sectionTitle}>Base Stats</Text>
+          </View>
         </View>
-    )
+      ) : (
+        <Text>Loading...</Text>
+      )}
+    </View>
+  );
 }
 
-const screenWidth = Dimensions.get('screen').width;
+const screenWidth = Dimensions.get("screen").width;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        //backgroundColor: '#74CB48',
-        alignItems: 'center',
-        width: screenWidth,
-    },
-    pokeball: {
-        position: 'absolute',
-        width: screenWidth * .6,
-        height: screenWidth * .6,
-        right: 8,
-        top: 8,
-    },
-    title: {
-        flexDirection: 'row',
-        width: screenWidth,
-        height: '10%',
-    },
-    empty: {
-        width: screenWidth,
-        height: '20%',
-        alignItems: 'center',
-        zIndex: 2
-    },
-    pokeImage: {
-        position: 'absolute',
-        top: 20,
-        width: 200,
-        height: 200
-    },
-    info: {
-        width: screenWidth * .96,
-        height: '69%',
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        paddingTop: 56,
-        alignItems: 'center',
-        gap: 16
-    },
-    about: {
-        flexDirection: 'row',
-    },
-    sectionTitle: {
-        color: '#74CB48',
-        fontWeight: 700,
-        fontSize: 16,
-    },
-    description: {
-        minHeight: 60,
-        textAlignVertical: 'center'
-    }
-
+  container: {
+    flex: 1,
+    alignItems: "center",
+    width: screenWidth,
+  },
+  pokeball: {
+    position: "absolute",
+    width: screenWidth * 0.6,
+    height: screenWidth * 0.6,
+    right: 8,
+    top: 8,
+  },
+  returnBar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: screenWidth,
+    height: "10%",
+    alignItems: "center",
+  },
+  titleContainer: {
+    flexDirection: "row",
+  },
+  title: {
+    fontSize: 24,
+  },
+  subtitle: {
+    fontSize: 18,
+  },
+  empty: {
+    width: screenWidth,
+    height: "20%",
+    alignItems: "center",
+    zIndex: 2,
+  },
+  pokeImage: {
+    position: "absolute",
+    width: screenWidth * 0.56,
+    height: screenWidth * 0.56,
+  },
+  info: {
+    width: screenWidth * 0.96,
+    height: "69%",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingTop: 56,
+    alignItems: "center",
+    gap: 16,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+  },
+  types: {
+    flexDirection: "row",
+    gap: 12,
+    borderRadius: 100,
+  },
+  textType: {
+    color: "white",
+    padding: 8,
+    marginHorizontal: 12,
+  },
+  about: {
+    flexDirection: "row",
+  },
+  sectionTitle: {
+    color: "#74CB48",
+    fontWeight: 700,
+    fontSize: 16,
+  },
+  description: {
+    minHeight: 60,
+    textAlignVertical: "center",
+  },
 });
