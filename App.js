@@ -5,64 +5,68 @@ import {
   Text,
   Image,
   Animated,
+  Dimensions,
+  TouchableOpacity,
+  Easing,
+  FlatList,
 } from "react-native";
-import Title from "./components/Title/Title";
+
+//======== Imports ========== //
 import axios from "axios";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import Constants from "./constants/Constants";
 
+//======== Components ========== //
+import Title from "./components/Title/Title";
 import Detail from "./components/Detail/Detail";
-import { FlatList } from "react-native";
-import { ActivityIndicator } from "react-native";
-import { Dimensions } from "react-native";
-import { TouchableOpacity } from "react-native";
-import { Easing } from "react-native";
+import PokeList from "./components/PokeList/PokeList";
+import { loadMoreItems } from "./utils/Utils";
 
+//======== Screen constants ========== //
 const screenWidth = Dimensions.get("screen").width;
-const numColumns = 3;
-const gap = 10;
+const availableSpace =
+  screenWidth - (Constants.numColumns - 1) * Constants.gap - 24;
+const itemSize = availableSpace / Constants.numColumns;
 
-const availableSpace = screenWidth - (numColumns - 1) * gap - 24;
-const itemSize = availableSpace / numColumns;
+// ----------- SPIN POKEBALL ANIMATION --------------- //
+spinValue = new Animated.Value(0);
 
+// First set up animation
+Animated.timing(this.spinValue, {
+  toValue: 1,
+  duration: 3000,
+  easing: Easing.linear, // Easing is an additional import from react-native
+  useNativeDriver: true, // To make use of native driver for performance
+}).start();
+
+// Next, interpolate beginning and end values (in this case 0 and 1)
+const spin = this.spinValue.interpolate({
+  inputRange: [0, 1],
+  outputRange: ["0deg", "360deg"],
+});
+
+//======== APP Component ========== //
 export default function App() {
-  const [pokemons, setPokemons] = useState([]);
   const [pokemonsData, setPokemonsData] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  // ----------- ANIMATION --------------- //
-  spinValue = new Animated.Value(0);
-
-  // First set up animation
-  Animated.timing(this.spinValue, {
-    toValue: 1,
-    duration: 3000,
-    asing: Easing.linear, // Easing is an additional import from react-native
-    useNativeDriver: true, // To make use of native driver for performance
-  }).start();
-
-  // Next, interpolate beginning and end values (in this case 0 and 1)
-  const spin = this.spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
-  // ----------- END ANIMATION ------------ //
-
+  // Function to make get petition
   const getPokemons = async () => {
+    setLoading(true);
     await axios
       .get(`https://pokeapi.co/api/v2/pokemon?offset=${currentPage}`)
       .then((res) => {
-        console.log(currentPage);
-        setPokemons(res.data.results);
         getPokemonsData(res.data.results);
       })
       .catch((err) => console.log(err));
   };
 
+  // Function that makes multiple petitions from the URLs returned from getPokemons.
   const getPokemonsData = async (data) => {
     let endpoints = data.map((pokemon) => pokemon.url);
-    // console.log(endpoints);
     try {
       const pokemonData = await axios
         .all(endpoints.map((endpoint) => axios.get(endpoint)))
@@ -72,6 +76,7 @@ export default function App() {
         const pokemons = pokemonData.map(({ data }) => data);
         setPokemonsData(pokemonsData.concat(pokemons));
       }
+      setLoading(false);
     } catch (error) {
       console.log(error);
     }
@@ -103,53 +108,77 @@ export default function App() {
     );
   }, []);
 
-  const renderLoader = () => {
-    return (
-      <View style={styles.loaderStyle}>
-        <Animated.Image
-          style={{
-            width: 40,
-            height: 40,
-            transform: [{ rotate: spin }],
-          }}
-          source={require("../pokedex/assets/images/pokeball-loader.png")}
-        />
-      </View>
-    );
-  };
-
-  const loadMoreItems = () => {
-    setCurrentPage(currentPage + 20);
-  };
-
   useEffect(() => {
     getPokemons();
   }, [currentPage]);
+
+  function Loader(props) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          width: Dimensions.get("screen").width - 24,
+          backgroundColor: "#EFEFEF",
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: 24,
+          marginBottom: 12,
+          borderRadius: 8,
+        }}
+      >
+        <Text>Loading Pokemons</Text>
+        <Text>Please wait...</Text>
+        <Animated.Image
+          style={{
+            width: Dimensions.get("screen").width / 2,
+            height: Dimensions.get("screen").width / 2,
+            transform: [
+              {
+                rotate: props.spin,
+              },
+            ],
+          }}
+          source={require("./assets/images/pokeball-loader.png")}
+        />
+      </View>
+    );
+  }
+
+  const LoadMore = () => {
+    return (
+      <View
+        style={{
+          alignSelf: "center",
+          width: "50%",
+          padding: 16,
+        }}
+      >
+        <TouchableOpacity
+          style={styles.loadMoreButton}
+          onPress={() => setCurrentPage(loadMoreItems(currentPage))}
+        >
+          <Text style={{ color: "white" }}>Load More</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   function HomeScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <Title />
         <Text>BARRA DE BUSQUEDA</Text>
-        <FlatList
-          style={{
-            marginHorizontal: 12,
-            backgroundColor: "#fff",
-            marginTop: 24,
-            marginBottom: 12,
-            borderRadius: 8,
-          }}
-          contentContainerStyle={{ gap }}
-          columnWrapperStyle={{ gap }}
-          numColumns={numColumns}
-          data={pokemonsData}
-          renderItem={(item) => renderItem(item, navigation)}
-          keyExtractor={(item) => item.id}
-          ListFooterComponent={renderLoader}
-          onEndReached={loadMoreItems}
-          navigation={navigation}
-          scrollsToTop={true}
-        />
+        {!loading ? (
+          <PokeList
+            navigation={navigation}
+            pokemonsData={pokemonsData}
+            renderItem={renderItem}
+            LoadMore={LoadMore}
+          ></PokeList>
+        ) : (
+          <Loader spin={spin}></Loader>
+        )}
+
         <StatusBar style="auto" />
       </View>
     );
@@ -224,6 +253,13 @@ const styles = StyleSheet.create({
   txtNameStyle: {},
   loaderStyle: {
     marginVertical: 16,
+    alignItems: "center",
+  },
+  loadMoreButton: {
+    backgroundColor: "#DC0A2D",
+    borderRadius: 100,
+    padding: 8,
+    justifyContent: "center",
     alignItems: "center",
   },
 });

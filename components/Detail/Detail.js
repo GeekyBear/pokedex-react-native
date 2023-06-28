@@ -6,10 +6,11 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Animated,
+  Easing,
 } from "react-native";
 import axios from "axios";
 import Colors from "../../constants/Colors";
-import LinearGradient from "react-native-linear-gradient";
 
 export default function Detail({ navigation: { goBack }, route }) {
   const { pokemonId } = route.params;
@@ -17,8 +18,25 @@ export default function Detail({ navigation: { goBack }, route }) {
   const [pokemonType, setPokemonType] = useState([]);
   const [flavorTextEntries, setFlavorTextEntries] = useState("");
 
-  const language = "en";
-  const version = "red";
+  // ----------- ANIMATION --------------- //
+  spinValue = new Animated.Value(0);
+
+  // First set up animation
+  Animated.timing(this.spinValue, {
+    toValue: 1,
+    duration: 3000,
+    easing: Easing.linear, // Easing is an additional import from react-native
+    useNativeDriver: true, // To make use of native driver for performance
+  }).start();
+
+  // Next, interpolate beginning and end values (in this case 0 and 1)
+  const spin = this.spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
+  // ----------- END ANIMATION ------------ //
+  // const language = "en";
+  // const version = "red";
 
   useEffect(() => {
     async function fetchData() {
@@ -49,12 +67,44 @@ export default function Detail({ navigation: { goBack }, route }) {
     fetchData();
   }, []);
 
+  function Loader(props) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          width: Dimensions.get("screen").width - 24,
+          backgroundColor: "#EFEFEF",
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: 24,
+          marginBottom: 12,
+          borderRadius: 8,
+        }}
+      >
+        <Text>Loading Pokemons</Text>
+        <Text>Please wait...</Text>
+        <Animated.Image
+          style={{
+            width: Dimensions.get("screen").width / 2,
+            height: Dimensions.get("screen").width / 2,
+            transform: [
+              {
+                rotate: props.spin,
+              },
+            ],
+          }}
+          source={require("../../assets/images/pokeball-loader.png")}
+        />
+      </View>
+    );
+  }
+
   return (
     <View
       style={[
         pokemonType
           ? { backgroundColor: Colors[pokemonType[0]] }
-          : { backgroundColor: "grey" },
+          : { backgroundColor: "#DC0A2D" },
         styles.container,
       ]}
     >
@@ -65,11 +115,20 @@ export default function Detail({ navigation: { goBack }, route }) {
             source={require("../../assets/images/pokeball.png")}
           />
           <View style={styles.returnBar}>
-            <View style={styles.titleContainer}>
-              <TouchableOpacity onPress={() => goBack()}>
-                <Text style={styles.title}>{"< "}</Text>
+            <View style={{ width: "50%" }}>
+              <TouchableOpacity
+                onPress={() => goBack()}
+                style={styles.titleContainer}
+              >
+                <Image
+                  source={require("../../assets/images/arrow.png")}
+                  style={{ top: 2 }}
+                />
+                <Text style={styles.title}>
+                  {pokemonData.data.name.charAt(0).toUpperCase() +
+                    pokemonData.data.name.slice(1)}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.title}>{pokemonData.data.name}</Text>
             </View>
             <Text style={styles.subtitle}>#{pokemonData.data.id}</Text>
           </View>
@@ -84,8 +143,9 @@ export default function Detail({ navigation: { goBack }, route }) {
           </View>
           <View style={styles.info}>
             <View style={styles.types}>
-              {pokemonData.data.types.map(({ slot, type, url }, index) => (
+              {pokemonData.data.types.map(({ slot, type, url }, index, []) => (
                 <TouchableOpacity
+                  key={index}
                   style={[
                     pokemonType
                       ? {
@@ -98,9 +158,7 @@ export default function Detail({ navigation: { goBack }, route }) {
                     styles.types,
                   ]}
                 >
-                  <Text key={index} style={styles.textType}>
-                    {type.name}
-                  </Text>
+                  <Text style={styles.textType}>{type.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -110,7 +168,13 @@ export default function Detail({ navigation: { goBack }, route }) {
               About
             </Text>
             <View style={styles.about}>
-              <View style={{ width: "30%", alignItems: "center" }}>
+              <View
+                style={{
+                  width: "30%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <View
                   style={{
                     flexDirection: "row",
@@ -126,8 +190,21 @@ export default function Detail({ navigation: { goBack }, route }) {
                 </View>
                 <Text>Weight</Text>
               </View>
-              <Text>|</Text>
-              <View style={{ width: "30%", alignItems: "center" }}>
+              <View
+                style={{
+                  backgroundColor: "lightgray",
+                  width: 2,
+                  marginLeft: 2,
+                  marginRight: 6,
+                }}
+              />
+              <View
+                style={{
+                  width: "30%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <View
                   style={{
                     flexDirection: "row",
@@ -143,20 +220,34 @@ export default function Detail({ navigation: { goBack }, route }) {
                 </View>
                 <Text>Height</Text>
               </View>
-              <Text>|</Text>
-              <View style={{ width: "30%", alignItems: "center" }}>
-                <View>
-                  {pokemonData.data.abilities.map(({ ability }) => {
+              <View
+                style={{
+                  backgroundColor: "lightgray",
+                  width: 2,
+                  marginLeft: 2,
+                  marginRight: 6,
+                }}
+              />
+              <View
+                style={{
+                  width: "30%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <View style={{ gap: 4 }}>
+                  <Text>Abilities</Text>
+                  {pokemonData.data.abilities.map(({ ability }, index) => {
                     let abilityName = ability.name;
                     return (
-                      <Text>
+                      <Text key={index}>
+                        <Text style={{ color: Colors[pokemonType[0]] }}>■</Text>{" "}
                         {abilityName.charAt(0).toUpperCase() +
                           abilityName.slice(1)}
                       </Text>
                     );
                   })}
                 </View>
-                <Text>Abilities</Text>
               </View>
             </View>
             <Text style={styles.description}>
@@ -174,8 +265,9 @@ export default function Detail({ navigation: { goBack }, route }) {
               Base Stats
             </Text>
             <View>
-              {pokemonData.data.stats.map(({ stat, base_stat }) => (
+              {pokemonData.data.stats.map(({ stat, base_stat }, index) => (
                 <View
+                  key={index}
                   style={{
                     width: screenWidth * 0.85,
                     paddingHorizontal: 20,
@@ -186,8 +278,16 @@ export default function Detail({ navigation: { goBack }, route }) {
                   <View style={{ flex: 1 }}>
                     <Text>{statNameFormatter(stat.name)}</Text>
                   </View>
+                  <View
+                    style={{
+                      backgroundColor: "lightgray",
+                      width: 2,
+                      marginLeft: 2,
+                      marginRight: 6,
+                    }}
+                  />
                   <View style={{ flex: 1 }}>
-                    <Text>{base_stat}</Text>
+                    <Text>{base_stat < 100 ? "0" + base_stat : base_stat}</Text>
                   </View>
                   <View
                     style={{
@@ -198,9 +298,15 @@ export default function Detail({ navigation: { goBack }, route }) {
                   >
                     <View
                       style={{
-                        width: base_stat < 110 ? `${base_stat - 15}%` : `100%`,
+                        width:
+                          base_stat <= 15
+                            ? `10%`
+                            : base_stat < 110
+                            ? `${base_stat - 15}%`
+                            : `100%`,
                         height: 10,
                         backgroundColor: Colors[pokemonType[0]],
+                        borderRadius: 100,
                       }}
                     />
                   </View>
@@ -210,7 +316,7 @@ export default function Detail({ navigation: { goBack }, route }) {
           </View>
         </View>
       ) : (
-        <Text>Loading...</Text>
+        <Loader spin={spin}></Loader>
       )}
     </View>
   );
@@ -232,6 +338,7 @@ const statNameFormatter = (statname) => {
       return "SPD";
   }
 };
+
 const screenWidth = Dimensions.get("screen").width;
 
 const styles = StyleSheet.create({
@@ -249,19 +356,28 @@ const styles = StyleSheet.create({
   },
   returnBar: {
     flexDirection: "row",
-    justifyContent: "space-around",
     width: screenWidth,
     height: "10%",
     alignItems: "center",
   },
   titleContainer: {
     flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingLeft: 20,
   },
   title: {
     fontSize: 24,
+    fontWeight: 700,
+    color: "white",
   },
   subtitle: {
     fontSize: 18,
+    fontWeight: 700,
+    color: "white",
+    width: "50%",
+    textAlign: "right",
+    paddingRight: 20,
   },
   empty: {
     width: screenWidth,
