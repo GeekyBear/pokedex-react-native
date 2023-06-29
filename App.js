@@ -23,6 +23,7 @@ import Title from "./components/Title/Title";
 import Detail from "./components/Detail/Detail";
 import PokeList from "./components/PokeList/PokeList";
 import { loadMoreItems } from "./utils/Utils";
+import { TextInput } from "react-native";
 
 //======== Screen constants ========== //
 const screenWidth = Dimensions.get("screen").width;
@@ -52,16 +53,33 @@ export default function App() {
   const [pokemonsData, setPokemonsData] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [pokeName, setPokeName] = useState("");
+  const [refresh, setRefresh] = useState(false);
 
   // Function to make get petition
-  const getPokemons = async () => {
+  const getPokemons = async (pokeName) => {
     setLoading(true);
-    await axios
-      .get(`https://pokeapi.co/api/v2/pokemon?offset=${currentPage}`)
-      .then((res) => {
-        getPokemonsData(res.data.results);
-      })
-      .catch((err) => console.log(err));
+    if (pokeName) {
+      await axios
+        .get(`https://pokeapi.co/api/v2/pokemon/${pokeName.toLowerCase()}`)
+        .then((res) => {
+          setPokemonsData([res.data]);
+
+          //getPokemonsData(res.data.results);
+        })
+        .catch((err) => setPokemonsData([]));
+
+      setRefresh(!refresh);
+      setLoading(false);
+    } else {
+      await axios
+        .get(`https://pokeapi.co/api/v2/pokemon?offset=${currentPage}`)
+        .then((res) => {
+          getPokemonsData(res.data.results);
+        })
+        .catch((err) => console.log(err));
+      setRefresh(!refresh);
+    }
   };
 
   // Function that makes multiple petitions from the URLs returned from getPokemons.
@@ -109,8 +127,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    getPokemons();
-  }, [currentPage]);
+    getPokemons(pokeName);
+  }, [currentPage, pokeName]);
 
   function Loader(props) {
     return (
@@ -163,15 +181,79 @@ export default function App() {
     );
   };
 
+  const handleTextChange = (pokemonName) => {
+    setPokeName(pokemonName);
+  };
+
+  const SearchBar = () => {
+    return (
+      <View
+        style={{
+          flexDirection: "row",
+          width: "100%",
+          justifyContent: "space-evenly",
+          paddingHorizontal: 16,
+        }}
+      >
+        <View
+          style={{
+            flex: 3,
+            backgroundColor: "white",
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            marginLeft: 12,
+            borderRadius: 100,
+            flexDirection: "row",
+          }}
+        >
+          <TouchableOpacity onPress={() => console.log(pokeName)}>
+            <Image
+              style={{ width: 20, height: 20 }}
+              source={require("./assets/images/icons/lupa.png")}
+            />
+          </TouchableOpacity>
+          <TextInput
+            style={{ paddingLeft: 8, width: "90%" }}
+            onSubmitEditing={(value) =>
+              handleTextChange(value.nativeEvent.text)
+            }
+          />
+        </View>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              backgroundColor: "white",
+              width: 40,
+              height: 40,
+              borderRadius: 100,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "#DC0A2D", fontSize: 16 }}>A</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
   function HomeScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <Title />
-        <Text>BARRA DE BUSQUEDA</Text>
+        <SearchBar />
         {!loading ? (
           <PokeList
+            refresh={refresh}
             navigation={navigation}
             pokemonsData={pokemonsData}
+            setPokeName={setPokeName}
             renderItem={renderItem}
             LoadMore={LoadMore}
           ></PokeList>
