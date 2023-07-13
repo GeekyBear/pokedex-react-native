@@ -46,7 +46,7 @@ export default function Detail({ navigation: { goBack }, route }) {
         );
 
         if (fulldata) {
-          console.log(fulldata.data.species.url);
+          // console.log(fulldata.data.species.url);
           setPokemonData(fulldata);
           setPokemonType(fulldata.data.types.map(({ type }) => type.name));
         }
@@ -55,6 +55,7 @@ export default function Detail({ navigation: { goBack }, route }) {
           const { data } = await axios.get(fulldata.data.species.url);
 
           if (data) {
+            // console.log(data.flavor_text_entries);
             setFlavorTextEntries(data.flavor_text_entries);
           }
         } catch (error) {
@@ -81,8 +82,26 @@ export default function Detail({ navigation: { goBack }, route }) {
           borderRadius: 8,
         }}
       >
-        <Text>Loading Pokemons</Text>
-        <Text>Please wait...</Text>
+        <Text
+          style={{
+            fontSize: Dimensions.get("screen").width / 14,
+            fontWeight: 800,
+            color: "#434a54",
+          }}
+        >
+          Loading Pokemons
+        </Text>
+
+        <Text
+          style={{
+            fontSize: Dimensions.get("screen").width / 20,
+            fontWeight: 600,
+            color: "#434a54",
+            marginBottom: 12,
+          }}
+        >
+          Please wait...
+        </Text>
         <Animated.Image
           style={{
             width: Dimensions.get("screen").width / 2,
@@ -158,7 +177,9 @@ export default function Detail({ navigation: { goBack }, route }) {
                     styles.types,
                   ]}
                 >
-                  <Text style={styles.textType}>{type.name}</Text>
+                  <Text style={styles.textType}>
+                    {type.name.charAt(0).toUpperCase() + type.name.slice(1)}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -251,16 +272,18 @@ export default function Detail({ navigation: { goBack }, route }) {
               </View>
             </View>
             <Text style={styles.description}>
-              {flavorTextEntries &&
-                flavorTextEntries
-                  .find(
-                    ({ language, version }) =>
-                      language.name === "en" && version.name === "black"
-                  )
-                  .flavor_text.replace(/(\r\n|\n|\r)/gm, " ")}
+              {flavorTextEntries
+                ? flavorTextEntries
+                    .find(({ language, version }) => language.name === "en")
+                    .flavor_text.replace(/(\r\n|\n|\r)/gm, " ")
+                : null}
             </Text>
             <Text
-              style={[styles.sectionTitle, { color: Colors[pokemonType[0]] }]}
+              style={
+                pokemonType.length > 1
+                  ? [styles.sectionTitle, { color: Colors[pokemonType[1]] }]
+                  : [styles.sectionTitle, { color: Colors[pokemonType[0]] }]
+              }
             >
               Base Stats
             </Text>
@@ -305,7 +328,10 @@ export default function Detail({ navigation: { goBack }, route }) {
                             ? `${base_stat - 15}%`
                             : `100%`,
                         height: 10,
-                        backgroundColor: Colors[pokemonType[0]],
+                        backgroundColor:
+                          pokemonType.length > 1
+                            ? Colors[pokemonType[1]]
+                            : Colors[pokemonType[0]],
                         borderRadius: 100,
                       }}
                     />

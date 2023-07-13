@@ -22,32 +22,38 @@ import Constants from "./constants/Constants";
 import Title from "./components/Title/Title";
 import Detail from "./components/Detail/Detail";
 import PokeList from "./components/PokeList/PokeList";
-import { loadMoreItems } from "./utils/Utils";
+import {
+  loadFirstItems,
+  loadLastItems,
+  loadMoreItems,
+  loadNextItems,
+  loadPrevItems,
+} from "./utils/Utils";
 import { TextInput } from "react-native";
 
 //======== Screen constants ========== //
 const screenWidth = Dimensions.get("screen").width;
 const availableSpace =
   screenWidth - (Constants.numColumns - 1) * Constants.gap - 24;
-const itemSize = availableSpace / Constants.numColumns;
+const itemSize = availableSpace / Constants.numColumns - 4;
 
-// ----------- SPIN POKEBALL ANIMATION --------------- //
-spinValue = new Animated.Value(0);
+//======== Animation ========= //
+const animatePokeball = () => {
+  spinValue = new Animated.Value(0);
 
-// First set up animation
-Animated.timing(this.spinValue, {
-  toValue: 1,
-  duration: 3000,
-  easing: Easing.linear, // Easing is an additional import from react-native
-  useNativeDriver: true, // To make use of native driver for performance
-}).start();
+  // First set up animation
+  Animated.timing(this.spinValue, {
+    toValue: 1,
+    duration: 3000,
+    easing: Easing.linear, // Easing is an additional import from react-native
+    useNativeDriver: true, // To make use of native driver for performance
+  }).start();
 
-// Next, interpolate beginning and end values (in this case 0 and 1)
-const spin = this.spinValue.interpolate({
-  inputRange: [0, 1],
-  outputRange: ["0deg", "360deg"],
-});
-
+  return (spin = this.spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  }));
+};
 //======== APP Component ========== //
 export default function App() {
   const [pokemonsData, setPokemonsData] = useState([]);
@@ -55,17 +61,17 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [pokeName, setPokeName] = useState("");
   const [refresh, setRefresh] = useState(false);
+  const [count, setCount] = useState(0);
 
   // Function to make get petition
   const getPokemons = async (pokeName) => {
+    animatePokeball();
     setLoading(true);
     if (pokeName) {
       await axios
         .get(`https://pokeapi.co/api/v2/pokemon/${pokeName.toLowerCase()}`)
         .then((res) => {
           setPokemonsData([res.data]);
-
-          //getPokemonsData(res.data.results);
         })
         .catch((err) => setPokemonsData([]));
 
@@ -73,8 +79,15 @@ export default function App() {
       setLoading(false);
     } else {
       await axios
-        .get(`https://pokeapi.co/api/v2/pokemon?offset=${currentPage}`)
+        .get(
+          `https://pokeapi.co/api/v2/pokemon?offset=${currentPage}&limit=21",`
+        )
         .then((res) => {
+          // setCount(
+          //   res.data.count % 20 === 0
+          //     ? res.data.count / 20
+          //     : Math.floor(res.data.count / 20) * 20
+          // );
           getPokemonsData(res.data.results);
         })
         .catch((err) => console.log(err));
@@ -92,7 +105,7 @@ export default function App() {
 
       if (pokemonData) {
         const pokemons = pokemonData.map(({ data }) => data);
-        setPokemonsData(pokemonsData.concat(pokemons));
+        setPokemonsData(pokemons);
       }
       setLoading(false);
     } catch (error) {
@@ -112,14 +125,19 @@ export default function App() {
             })
           }
         >
-          <Image
-            style={styles.itemImageStyle}
-            source={{
-              uri: item.sprites.other["official-artwork"].front_default,
-            }}
-          />
+          {item.sprites.other["official-artwork"] ? (
+            <Image
+              style={styles.itemImageStyle}
+              source={{
+                uri: item.sprites.other["official-artwork"].front_default,
+              }}
+            />
+          ) : null}
+
           <View style={styles.contentWrapperStyle}>
-            <Text style={styles.txtNameStyle}>{item.name}</Text>
+            <Text style={styles.txtNameStyle}>
+              {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -144,8 +162,26 @@ export default function App() {
           borderRadius: 8,
         }}
       >
-        <Text>Loading Pokemons</Text>
-        <Text>Please wait...</Text>
+        <Text
+          style={{
+            fontSize: Dimensions.get("screen").width / 14,
+            fontWeight: 800,
+            color: "#434a54",
+          }}
+        >
+          Loading Pokemons
+        </Text>
+
+        <Text
+          style={{
+            fontSize: Dimensions.get("screen").width / 20,
+            fontWeight: 600,
+            color: "#434a54",
+            marginBottom: 12,
+          }}
+        >
+          Please wait...
+        </Text>
         <Animated.Image
           style={{
             width: Dimensions.get("screen").width / 2,
@@ -162,21 +198,46 @@ export default function App() {
     );
   }
 
-  const LoadMore = () => {
+  const LoadHandler = () => {
     return (
       <View
         style={{
-          alignSelf: "center",
-          width: "50%",
-          padding: 16,
+          flex: 1,
+          flexDirection: "row",
+          marginBottom: 24,
+          marginTop: 12,
+          justifyContent: "center",
         }}
       >
-        <TouchableOpacity
-          style={styles.loadMoreButton}
-          onPress={() => setCurrentPage(loadMoreItems(currentPage))}
-        >
-          <Text style={{ color: "white" }}>Load More</Text>
-        </TouchableOpacity>
+        {pokeName ? (
+          <View>
+            <TouchableOpacity
+              style={styles.resetSearch}
+              onPress={() => setPokeName("")}
+            >
+              <Text style={{ color: "white", fontSize: 20 }}>Reset search</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity
+              disabled={currentPage === 0 ? true : false}
+              style={
+                currentPage === 0 ? styles.disabled : styles.loadMoreTextButton
+              }
+              onPress={() => setCurrentPage(loadPrevItems(currentPage))}
+            >
+              <Text style={{ color: "white" }}>Prev</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.loadMoreTextButton}
+              onPress={() => setCurrentPage(loadNextItems(currentPage))}
+            >
+              <Text style={{ color: "white" }}>Next</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     );
   };
@@ -255,7 +316,7 @@ export default function App() {
             pokemonsData={pokemonsData}
             setPokeName={setPokeName}
             renderItem={renderItem}
-            LoadMore={LoadMore}
+            LoadHandler={LoadHandler}
           ></PokeList>
         ) : (
           <Loader spin={spin}></Loader>
@@ -332,7 +393,11 @@ const styles = StyleSheet.create({
     right: 12,
     top: 4,
   },
-  txtNameStyle: {},
+  txtNameStyle: {
+    fontWeight: 600,
+    fontSize: 16,
+    color: "#000a0a",
+  },
   loaderStyle: {
     marginVertical: 16,
     alignItems: "center",
@@ -340,7 +405,37 @@ const styles = StyleSheet.create({
   loadMoreButton: {
     backgroundColor: "#DC0A2D",
     borderRadius: 100,
-    padding: 8,
+    marginHorizontal: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadMoreTextButton: {
+    backgroundColor: "#DC0A2D",
+    borderRadius: 100,
+    marginHorizontal: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  disabled: {
+    backgroundColor: "#c5c6d0",
+    borderRadius: 100,
+    marginHorizontal: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  resetSearch: {
+    alignSelf: "center",
+    backgroundColor: "#DC0A2D",
+    borderRadius: 100,
+    marginHorizontal: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     justifyContent: "center",
     alignItems: "center",
   },
