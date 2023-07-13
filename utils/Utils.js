@@ -1,6 +1,17 @@
-const loadMoreItems = (currentPage) => {
-  console.log(currentPage);
-  return currentPage + 20;
+const loadFirstItems = (currentPage) => {
+  return currentPage;
 };
 
-export { loadMoreItems };
+const loadLastItems = (currentPage) => {
+  return currentPage;
+};
+
+const loadNextItems = (currentPage) => {
+  return currentPage + 21;
+};
+
+const loadPrevItems = (currentPage) => {
+  if (currentPage <= 0) return 0;
+  return currentPage - 21;
+};
+export { loadNextItems, loadPrevItems, loadFirstItems, loadLastItems };
