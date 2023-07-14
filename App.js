@@ -30,6 +30,10 @@ import {
   loadPrevItems,
 } from "./utils/Utils";
 import { TextInput } from "react-native";
+import SearchBar from "./components/SearchBar/SearchBar";
+import LoadHandler from "./components/LoadHandler/LoadHandler";
+import Loader from "./components/Loader/Loader";
+import AnimatedLoader from "./components/AnimatedLoader/AnimatedLoader";
 
 //======== Screen constants ========== //
 const screenWidth = Dimensions.get("screen").width;
@@ -37,23 +41,6 @@ const availableSpace =
   screenWidth - (Constants.numColumns - 1) * Constants.gap - 24;
 const itemSize = availableSpace / Constants.numColumns - 4;
 
-//======== Animation ========= //
-const animatePokeball = () => {
-  spinValue = new Animated.Value(0);
-
-  // First set up animation
-  Animated.timing(this.spinValue, {
-    toValue: 1,
-    duration: 3000,
-    easing: Easing.linear, // Easing is an additional import from react-native
-    useNativeDriver: true, // To make use of native driver for performance
-  }).start();
-
-  return (spin = this.spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  }));
-};
 //======== APP Component ========== //
 export default function App() {
   const [pokemonsData, setPokemonsData] = useState([]);
@@ -62,10 +49,11 @@ export default function App() {
   const [pokeName, setPokeName] = useState("");
   const [refresh, setRefresh] = useState(false);
   const [count, setCount] = useState(0);
+  const [lastPage, setLastPage] = useState(false);
 
   // Function to make get petition
   const getPokemons = async (pokeName) => {
-    animatePokeball();
+    AnimatedLoader();
     setLoading(true);
     if (pokeName) {
       await axios
@@ -83,11 +71,11 @@ export default function App() {
           `https://pokeapi.co/api/v2/pokemon?offset=${currentPage}&limit=21",`
         )
         .then((res) => {
-          // setCount(
-          //   res.data.count % 20 === 0
-          //     ? res.data.count / 20
-          //     : Math.floor(res.data.count / 20) * 20
-          // );
+          setCount(
+            res.data.count % 21 === 0
+              ? (res.data.count / 21) * 21 - 21
+              : Math.floor(res.data.count / 21) * 21
+          );
           getPokemonsData(res.data.results);
         })
         .catch((err) => console.log(err));
@@ -125,14 +113,19 @@ export default function App() {
             })
           }
         >
-          {item.sprites.other["official-artwork"] ? (
+          {item.sprites.other["official-artwork"].front_default ? (
             <Image
               style={styles.itemImageStyle}
               source={{
                 uri: item.sprites.other["official-artwork"].front_default,
               }}
             />
-          ) : null}
+          ) : (
+            <Image
+              style={styles.missingImageStyle}
+              source={require("./assets/images/question.png")}
+            />
+          )}
 
           <View style={styles.contentWrapperStyle}>
             <Text style={styles.txtNameStyle}>
@@ -148,167 +141,15 @@ export default function App() {
     getPokemons(pokeName);
   }, [currentPage, pokeName]);
 
-  function Loader(props) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          width: Dimensions.get("screen").width - 24,
-          backgroundColor: "#EFEFEF",
-          alignItems: "center",
-          justifyContent: "center",
-          marginTop: 24,
-          marginBottom: 12,
-          borderRadius: 8,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: Dimensions.get("screen").width / 14,
-            fontWeight: 800,
-            color: "#434a54",
-          }}
-        >
-          Loading Pokemons
-        </Text>
-
-        <Text
-          style={{
-            fontSize: Dimensions.get("screen").width / 20,
-            fontWeight: 600,
-            color: "#434a54",
-            marginBottom: 12,
-          }}
-        >
-          Please wait...
-        </Text>
-        <Animated.Image
-          style={{
-            width: Dimensions.get("screen").width / 2,
-            height: Dimensions.get("screen").width / 2,
-            transform: [
-              {
-                rotate: props.spin,
-              },
-            ],
-          }}
-          source={require("./assets/images/pokeball-loader.png")}
-        />
-      </View>
-    );
-  }
-
-  const LoadHandler = () => {
-    return (
-      <View
-        style={{
-          flex: 1,
-          flexDirection: "row",
-          marginBottom: 24,
-          marginTop: 12,
-          justifyContent: "center",
-        }}
-      >
-        {pokeName ? (
-          <View>
-            <TouchableOpacity
-              style={styles.resetSearch}
-              onPress={() => setPokeName("")}
-            >
-              <Text style={{ color: "white", fontSize: 20 }}>Reset search</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <TouchableOpacity
-              disabled={currentPage === 0 ? true : false}
-              style={
-                currentPage === 0 ? styles.disabled : styles.loadMoreTextButton
-              }
-              onPress={() => setCurrentPage(loadPrevItems(currentPage))}
-            >
-              <Text style={{ color: "white" }}>Prev</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.loadMoreTextButton}
-              onPress={() => setCurrentPage(loadNextItems(currentPage))}
-            >
-              <Text style={{ color: "white" }}>Next</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-    );
-  };
-
   const handleTextChange = (pokemonName) => {
     setPokeName(pokemonName);
-  };
-
-  const SearchBar = () => {
-    return (
-      <View
-        style={{
-          flexDirection: "row",
-          width: "100%",
-          justifyContent: "space-evenly",
-          paddingHorizontal: 16,
-        }}
-      >
-        <View
-          style={{
-            flex: 3,
-            backgroundColor: "white",
-            paddingVertical: 8,
-            paddingHorizontal: 16,
-            marginLeft: 12,
-            borderRadius: 100,
-            flexDirection: "row",
-          }}
-        >
-          <TouchableOpacity onPress={() => console.log(pokeName)}>
-            <Image
-              style={{ width: 20, height: 20 }}
-              source={require("./assets/images/icons/lupa.png")}
-            />
-          </TouchableOpacity>
-          <TextInput
-            style={{ paddingLeft: 8, width: "90%" }}
-            onSubmitEditing={(value) =>
-              handleTextChange(value.nativeEvent.text)
-            }
-          />
-        </View>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <TouchableOpacity
-            style={{
-              backgroundColor: "white",
-              width: 40,
-              height: 40,
-              borderRadius: 100,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "#DC0A2D", fontSize: 16 }}>A</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
   };
 
   function HomeScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <Title />
-        <SearchBar />
+        <SearchBar handleTextChange={handleTextChange} />
         {!loading ? (
           <PokeList
             refresh={refresh}
@@ -316,12 +157,25 @@ export default function App() {
             pokemonsData={pokemonsData}
             setPokeName={setPokeName}
             renderItem={renderItem}
-            LoadHandler={LoadHandler}
+            LoadHandler={() => (
+              <LoadHandler
+                pokeName={pokeName}
+                currentPage={currentPage}
+                lastPage={lastPage}
+                setCurrentPage={setCurrentPage}
+                setLastPage={setLastPage}
+                loadNextItems={loadNextItems}
+                loadPrevItems={loadPrevItems}
+                loadFirstItems={loadFirstItems}
+                loadLastItems={loadLastItems}
+                count={count}
+                setPokeName={setPokeName}
+              />
+            )}
           ></PokeList>
         ) : (
           <Loader spin={spin}></Loader>
         )}
-
         <StatusBar style="auto" />
       </View>
     );
@@ -381,6 +235,11 @@ const styles = StyleSheet.create({
     height: "70%",
     zIndex: 2,
   },
+  missingImageStyle: {
+    width: "35%",
+    height: "35%",
+    zIndex: 2,
+  },
   touchableStyle: {
     width: "100%",
     height: "100%",
@@ -397,46 +256,5 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     fontSize: 16,
     color: "#000a0a",
-  },
-  loaderStyle: {
-    marginVertical: 16,
-    alignItems: "center",
-  },
-  loadMoreButton: {
-    backgroundColor: "#DC0A2D",
-    borderRadius: 100,
-    marginHorizontal: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadMoreTextButton: {
-    backgroundColor: "#DC0A2D",
-    borderRadius: 100,
-    marginHorizontal: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  disabled: {
-    backgroundColor: "#c5c6d0",
-    borderRadius: 100,
-    marginHorizontal: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  resetSearch: {
-    alignSelf: "center",
-    backgroundColor: "#DC0A2D",
-    borderRadius: 100,
-    marginHorizontal: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });
