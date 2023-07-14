@@ -6,11 +6,11 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  Animated,
-  Easing,
 } from "react-native";
 import axios from "axios";
 import Colors from "../../constants/Colors";
+import Loader from "../Loader/Loader";
+import AnimatedLoader from "../AnimatedLoader/AnimatedLoader";
 
 export default function Detail({ navigation: { goBack }, route }) {
   const { pokemonId } = route.params;
@@ -18,25 +18,10 @@ export default function Detail({ navigation: { goBack }, route }) {
   const [pokemonType, setPokemonType] = useState([]);
   const [flavorTextEntries, setFlavorTextEntries] = useState("");
 
-  // ----------- ANIMATION --------------- //
-  spinValue = new Animated.Value(0);
-
-  // First set up animation
-  Animated.timing(this.spinValue, {
-    toValue: 1,
-    duration: 3000,
-    easing: Easing.linear, // Easing is an additional import from react-native
-    useNativeDriver: true, // To make use of native driver for performance
-  }).start();
-
-  // Next, interpolate beginning and end values (in this case 0 and 1)
-  const spin = this.spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
-  // ----------- END ANIMATION ------------ //
   // const language = "en";
   // const version = "red";
+
+  AnimatedLoader();
 
   useEffect(() => {
     async function fetchData() {
@@ -67,56 +52,6 @@ export default function Detail({ navigation: { goBack }, route }) {
     }
     fetchData();
   }, []);
-
-  function Loader(props) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          width: Dimensions.get("screen").width - 24,
-          backgroundColor: "#EFEFEF",
-          alignItems: "center",
-          justifyContent: "center",
-          marginTop: 24,
-          marginBottom: 12,
-          borderRadius: 8,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: Dimensions.get("screen").width / 14,
-            fontWeight: 800,
-            color: "#434a54",
-          }}
-        >
-          Loading Pokemons
-        </Text>
-
-        <Text
-          style={{
-            fontSize: Dimensions.get("screen").width / 20,
-            fontWeight: 600,
-            color: "#434a54",
-            marginBottom: 12,
-          }}
-        >
-          Please wait...
-        </Text>
-        <Animated.Image
-          style={{
-            width: Dimensions.get("screen").width / 2,
-            height: Dimensions.get("screen").width / 2,
-            transform: [
-              {
-                rotate: props.spin,
-              },
-            ],
-          }}
-          source={require("../../assets/images/pokeball-loader.png")}
-        />
-      </View>
-    );
-  }
 
   return (
     <View
@@ -152,13 +87,21 @@ export default function Detail({ navigation: { goBack }, route }) {
             <Text style={styles.subtitle}>#{pokemonData.data.id}</Text>
           </View>
           <View style={styles.empty}>
-            <Image
-              style={styles.pokeImage}
-              source={{
-                uri: pokemonData.data.sprites.other["official-artwork"]
-                  .front_default,
-              }}
-            />
+            {pokemonData.data.sprites.other["official-artwork"]
+              .front_default ? (
+              <Image
+                style={styles.pokeImage}
+                source={{
+                  uri: pokemonData.data.sprites.other["official-artwork"]
+                    .front_default,
+                }}
+              />
+            ) : (
+              <Image
+                style={styles.pokeMissing}
+                source={require("../../assets/images/question.png")}
+              />
+            )}
           </View>
           <View style={styles.info}>
             <View style={styles.types}>
@@ -415,6 +358,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: screenWidth * 0.56,
     height: screenWidth * 0.56,
+  },
+  pokeMissing: {
+    position: "absolute",
+    width: screenWidth * 0.45,
+    height: screenWidth * 0.45,
   },
   info: {
     width: screenWidth * 0.96,
