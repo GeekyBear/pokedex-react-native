@@ -34,6 +34,9 @@ import SearchBar from "./components/SearchBar/SearchBar";
 import LoadHandler from "./components/LoadHandler/LoadHandler";
 import Loader from "./components/Loader/Loader";
 import AnimatedLoader from "./components/AnimatedLoader/AnimatedLoader";
+import { Modal } from "react-native";
+import { Pressable } from "react-native";
+import RadioButton from "./components/RadioButton/RadioButton";
 
 //======== Screen constants ========== //
 const screenWidth = Dimensions.get("screen").width;
@@ -50,6 +53,8 @@ export default function App() {
   const [refresh, setRefresh] = useState(false);
   const [count, setCount] = useState(0);
   const [lastPage, setLastPage] = useState(false);
+  const [modalVisible, setModalVisible] = useState(true);
+  const [selected, setSelected] = useState(true);
 
   // Function to make get petition
   const getPokemons = async (pokeName) => {
@@ -65,6 +70,22 @@ export default function App() {
 
       setRefresh(!refresh);
       setLoading(false);
+    } else if (!selected) {
+      await axios
+        .get(`https://pokeapi.co/api/v2/pokemon?offset=0&limit=200",`) // In order to save resources, only are fetch 200 pokemons but it can be modified.
+        .then((res) => {
+          setCount(
+            res.data.count % 21 === 0
+              ? (res.data.count / 21) * 21 - 21
+              : Math.floor(res.data.count / 21) * 21
+          );
+
+          getPokemonsData(
+            res.data.results.sort((a, b) => a.name.localeCompare(b.name))
+          );
+        })
+        .catch((err) => console.log(err));
+      setRefresh(!refresh);
     } else {
       await axios
         .get(
@@ -139,7 +160,7 @@ export default function App() {
 
   useEffect(() => {
     getPokemons(pokeName);
-  }, [currentPage, pokeName]);
+  }, [currentPage, pokeName, selected]);
 
   const handleTextChange = (pokemonName) => {
     setPokeName(pokemonName);
@@ -149,7 +170,89 @@ export default function App() {
     return (
       <View style={styles.container}>
         <Title />
-        <SearchBar handleTextChange={handleTextChange} />
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              width: "100%",
+              height: "100%",
+              paddingHorizontal: 16,
+              paddingTop: 150,
+              alignItems: "flex-end",
+              elevation: 4,
+            }}
+            onPress={() => setModalVisible(!modalVisible)}
+          >
+            <View
+              style={{
+                width: 120,
+                height: 150,
+                backgroundColor: "#DC0A2D",
+                borderRadius: 8,
+                shadowColor: "#000",
+                shadowOffset: {
+                  width: 0,
+                  height: 1,
+                },
+                shadowOpacity: 0.2,
+                shadowRadius: 1.41,
+                elevation: 10,
+              }}
+            >
+              <View
+                style={{
+                  paddingHorizontal: 20,
+                  paddingVertical: 16,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontWeight: 700, color: "white" }}>
+                  Sort By:
+                </Text>
+              </View>
+              <View
+                style={{
+                  marginHorizontal: 4,
+                  marginBottom: 4,
+                  paddingLeft: 8,
+                  paddingVertical: 16,
+                  flex: 1,
+                  backgroundColor: "white",
+                  borderRadius: 8,
+                  gap: 16,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelected(true);
+                    setModalVisible(!modalVisible);
+                  }}
+                >
+                  <RadioButton props={{ name: "Number", selected: selected }} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelected(false);
+                    setModalVisible(!modalVisible);
+                  }}
+                >
+                  <RadioButton props={{ name: "Name", selected: !selected }} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+        <SearchBar
+          handleTextChange={handleTextChange}
+          setModalVisible={setModalVisible}
+          modalVisible={modalVisible}
+        />
         {!loading ? (
           <PokeList
             refresh={refresh}
