@@ -1,6 +1,10 @@
 import { Text, TextInput, TouchableOpacity, View, Image } from "react-native";
 
-export default function SearchBar({ handleTextChange }) {
+export default function SearchBar({
+  handleTextChange,
+  setModalVisible,
+  modalVisible,
+}) {
   return (
     <View
       style={{
@@ -48,6 +52,7 @@ export default function SearchBar({ handleTextChange }) {
             justifyContent: "center",
             alignItems: "center",
           }}
+          onPress={() => setModalVisible(!modalVisible)}
         >
           <Text style={{ color: "#DC0A2D", fontSize: 16 }}>A</Text>
         </TouchableOpacity>
