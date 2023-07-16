@@ -3,6 +3,7 @@
 
 ¡Bienvenido al repositorio de Pokedex! Esta es una aplicación desarrollada en React Native que te permite explorar y descubrir información sobre diferentes Pokémon. Utiliza la API PokeApi para obtener datos actualizados sobre los Pokémon.
 
+![Pokedex Demo](https://s11.gifyu.com/images/SW8Be.gif)
 
 
 ## Características
